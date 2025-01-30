@@ -10,7 +10,6 @@ interface CustomSocket extends Socket {
 
 interface Room {
     name: string;
-    isPrivate: boolean;
     password?: string;
     messages: { id: string; username: string; message: string }[];
     images: { id: string; username: string; image: string }[]; // Adicionando imagens à sala
@@ -34,7 +33,7 @@ class App {
 
     // Inicia o servidor HTTP na porta 3000
     listenServer() {
-        this.http.listen(3000, () => console.log('Server is running on http://localhost:3000'));
+        this.http.listen(5000, () => console.log('Server is running on http://localhost:5000'));
     }
 
     // Configura os eventos de WebSocket
@@ -48,7 +47,7 @@ class App {
             });
 
             // Criar uma nova sala
-            socket.on('createRoom', ({ name, isPrivate, password }) => {
+            socket.on('createRoom', ({name}) => {
                 const roomExists = this.rooms.find((room) => room.name === name);
                 if (roomExists) {
                     socket.emit('error', 'A Sala já existe');
@@ -56,9 +55,7 @@ class App {
                 }
 
                 const newRoom: Room = { 
-                    name, 
-                    isPrivate, 
-                    password: isPrivate ? password : undefined, 
+                    name,
                     messages: [], 
                     images: [] 
                 };
@@ -79,23 +76,6 @@ class App {
                 socket.join(room);
                 this.io.to(room).emit('message', { id: this.generateMessageId(), username: 'System', message: `${username} has joined the room!` });
                 socket.emit('joinedRoom', roomObj);  // Envia as informações da sala para o usuário
-            });
-
-            // Entrar em uma sala privada
-            socket.on('joinPrivateRoom', ({ room, password }) => {
-                const roomObj = this.rooms.find(r => r.name === room);
-                if (roomObj && roomObj.isPrivate) {
-                    if (roomObj.password === password) {
-                        socket.username = socket.username || 'Unknown User';
-                        socket.join(room);
-                        this.io.to(room).emit('message', { id: this.generateMessageId(), username: 'System', message: `${socket.username} has joined the private room!` });
-                        socket.emit('joinedRoom', roomObj);
-                    } else {
-                        socket.emit('error', ' Senha Errada!');
-                    }
-                } else {
-                    socket.emit('error', 'Room does not exist or is not private');
-                }
             });
 
             // Enviar uma mensagem para a sala

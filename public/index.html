@@ -7,36 +7,12 @@
     <link rel="stylesheet" href="/styles.css">
     <!-- Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Estilos adicionais para a navbar -->
-    <link rel="stylesheet" href="/style-navbar.css">
 </head>
 <body>
-        
-    <!-- Navbar -->
-    <header>
-        <nav class="navbar">
-            <a class="logo" href="/">
-                <img src="/img/bluetalk2.png" alt="BlueTalk Logo" class="logo-img"> BlueTalk
-            </a>
-            <div class="mobile-menu">
-                <div class="line1"></div>
-                <div class="line2"></div>
-                <div class="line3"></div>
-            </div>
-            <ul class="nav-list">
-                <li><a href="#login">Login</a></li>
-                <li><a href="#roomsScreen">Salas</a></li>
-                <li><a href="#chatScreen">Chat</a></li>
-            </ul>
-        </nav>
-    </header>
-
     <!-- Tela de Login -->
     <div id="login">
 
-        <div class="logo-container">
-            <img src="img/bluetalk.png" alt="BlueTalk Logo" class="login-logo">
-        </div>
+        
         <h2>Bem-vindo!</h2>
         <form id="loginForm">
             <input id="name" autocomplete="off" placeholder="Seu nome" required />
@@ -44,17 +20,9 @@
         </form>
     </div>
 
-    <div class="cube"></div>
-        <div class="cube"></div>
-        <div class="cube"></div>
-        <div class="cube"></div>
-        <div class="cube"></div>
-        <div class="cube"></div>
-      </div>
-
     <!-- Tela de Salas -->
     <div id="roomsScreen" style="display: none;">
-        <button id="backButton" class="back-button">&#8592; Voltar</button>
+        <button id="backButton" class="back-button"></button></button>
         <h3>Escolha uma sala para entrar</h3>
         <ul id="roomList"></ul>
         <div id="privateRoomPasswordSection" style="display: none;">
@@ -66,15 +34,13 @@
 
     <!-- Tela de Chat -->
     <div id="chatScreen" style="display: none;">
-        <button id="leaveButton" class="back-button">&#8592;</button>
+        <button id="leaveButton" class="back-button"></button>
         <ul id="messages"></ul>
         <!-- Formulário de envio de mensagens -->
         <form id="form" action="">
             <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
             <button type="submit" id="sendButton">Enviar</button>
             <!-- Botão para enviar imagem -->
-            <button type="button" id="sendImageButton">
-                <i class="fa fa-image"></i> 
             </button>
             <input type="file" id="imageInput" style="display: none;" accept="image/*" />
         </form>
@@ -148,26 +114,10 @@
         const captionText = document.getElementById("caption");
         let username;
         let currentRoom = null;
-        let isPrivateRoom = false;
 
-        // Funções para editar mensagem, excluir mensagem e excluir sala
-        function editMessage(messageId, newMessage) {
-            socket.emit('editMessage', { messageId, newMessage }); // Envia a edição ao servidor
-        }
+        
 
-        function deleteMessage(messageId) {
-            socket.emit('deleteMessage', { messageId }); // Envia a solicitação de exclusão ao servidor
-        }
-
-        function deleteRoom(roomName) {
-            socket.emit('deleteRoom', { roomName }); // Envia a solicitação de exclusão da sala ao servidor
-        }
-
-        //Função de abrir opções com 2 cliques
-        function showOptions(messageElement) {
-        const options = messageElement.querySelector('.message-options');
-        options.style.display = 'flex'; // Mostra as opções
-        }
+       
 
         // Tela de Login
         loginForm.addEventListener('submit', (e) => {
@@ -194,34 +144,10 @@
         // Entrar em uma sala
         function joinRoom(room) {
             currentRoom = room.name;
-            if (room.isPrivate) {
-                // Sala privada
-                isPrivateRoom = true;
-                privateRoomPasswordSection.style.display = 'block'; // Mostra a seção para inserir a senha
-                joinPrivateRoomButton.onclick = () => {
-                    const password = privateRoomPasswordInput.value.trim();
-                    socket.emit('joinPrivateRoom', { room: room.name, password });
-                };
-            } else {
-                // Sala pública
                 socket.emit('joinRoom', { username, room: room.name });
                 roomsScreen.style.display = 'none';
                 chatScreen.style.display = 'block';
             }
-        }
-
-        // Erro de sala privada
-        socket.on('error', (message) => {
-            alert(message);
-        });
-
-        // Entrou na sala privada
-        socket.on('joinedRoom', (room) => {
-            roomsScreen.style.display = 'none';
-            chatScreen.style.display = 'block';
-            currentRoom = room.name;
-            privateRoomPasswordSection.style.display = 'none';
-        });
 
        // Criar sala
         createRoomButton.addEventListener('click', () => {
@@ -233,10 +159,7 @@
                 return;
             }
 
-            const isPrivate = confirm("Essa sala é privada?");
-            const password = isPrivate ? prompt("Insira uma senha para a sala:") : null;
-
-            socket.emit('createRoom', { name: roomName, isPrivate, password });
+            socket.emit('createRoom', { name: roomName});
         });
         
         // Enviar mensagem
@@ -270,11 +193,6 @@
             }
         });
 
-        // Enviar imagem
-        sendImageButton.addEventListener('click', () => {
-            imageInput.click(); // Aciona a seleção de arquivo de imagem
-        });
-
         imageInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -291,35 +209,7 @@
             }
         });
 
-        // Receber imagem
-        socket.on('image', (data) => {
-            if (data.room === currentRoom) {
-                const li = document.createElement('li');
-                const userSpan = document.createElement('span');
-                const image = document.createElement('img');
-                const strongTag = document.createElement('strong');
-
-                strongTag.textContent = data.username;
-                userSpan.appendChild(strongTag);
-                userSpan.style.marginRight = '10px';
-
-                image.src = data.image;
-                image.style.maxWidth = '100%'; // Ajusta a imagem para não ultrapassar a largura
-
-                // Adiciona a imagem à lista de mensagens
-                li.appendChild(userSpan);
-                li.appendChild(image);
-                li.classList.add(data.username === username ? 'my-message' : 'other-message');
-                messagesList.appendChild(li);
-
-                // Adiciona o evento de clique para abrir a imagem no modal
-                image.addEventListener("click", function() {
-                    modal.style.display = "block";
-                    modalImg.src = this.src;
-                    captionText.innerHTML = this.alt || "Imagem";
-                });
-            }
-        });
+        
 
         // Fechar o modal ao clicar no "X"
         var span = document.getElementsByClassName("close")[0];
