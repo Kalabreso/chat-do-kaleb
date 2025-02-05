@@ -1,3 +1,4 @@
+//servidor básico com Express e Socket.io.
 import express, { Application } from 'express';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
@@ -6,15 +7,13 @@ import path from 'path';
 // Extensão da interface Socket para adicionar a propriedade username
 interface CustomSocket extends Socket {
     username?: string;
-}
+} 
 
 interface Room {
     name: string;
-    password?: string;
     messages: { id: string; username: string; message: string }[];
-    images: { id: string; username: string; image: string }[]; // Adicionando imagens à sala
+    
 }
-
 class App {
     private app: Application;
     private http: http.Server;
@@ -22,11 +21,11 @@ class App {
     private rooms: Room[];
 
     constructor() {
-        // Inicialização do express, http e socket.io
+        
         this.app = express();
         this.http = http.createServer(this.app);
         this.io = new Server(this.http);
-        this.rooms = [];  // Lista de salas
+        this.rooms = [];  
         this.listenSocket(); // Configura o servidor de WebSocket
         this.setupRoutes();  // Configura as rotas da aplicação
     }
@@ -57,7 +56,7 @@ class App {
                 const newRoom: Room = { 
                     name,
                     messages: [], 
-                    images: [] 
+                     
                 };
                 this.rooms.push(newRoom);
                 this.io.emit('roomsList', this.rooms);  // Atualiza a lista de salas para todos os clientes
@@ -105,7 +104,6 @@ class App {
                 const roomObj = this.rooms.find(r => r.name === data.room);
                 if (roomObj) {
                     const image = { id: this.generateMessageId(), username: data.username, image: data.image };
-                    roomObj.images.push(image);  // Adiciona a imagem à sala
                     this.io.to(data.room).emit('image', { ...image, room: data.room });  // Envia a imagem para todos na sala
                 }
             });
