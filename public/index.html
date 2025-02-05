@@ -39,19 +39,11 @@
         <!-- Formulário de envio de mensagens -->
         <form id="form" action="">
             <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
-            <button type="submit" id="sendButton">Enviar</button>
-            <!-- Botão para enviar imagem -->
-            </button>
             <input type="file" id="imageInput" style="display: none;" accept="image/*" />
         </form>
     </div>
 
-    <!-- Modal para exibição de imagem -->
-    <div id="imageModal" class="modal" style="display:none;">
-        <span class="close">&times;</span>
-        <img class="modal-content" id="modalImage">
-        <div id="caption"></div>
-    </div>
+    
 
     <script src="/public/mobile-navbar.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -109,7 +101,6 @@
         const sendImageButton = document.getElementById('sendImageButton');
         const imageInput = document.getElementById('imageInput');
         const backButton = document.getElementById('backButton');
-        const modal = document.getElementById("imageModal");
         const modalImg = document.getElementById("modalImage");
         const captionText = document.getElementById("caption");
         let username;
@@ -192,30 +183,6 @@
                 messagesList.appendChild(li);
             }
         });
-
-        imageInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const imageBase64 = reader.result;
-                    socket.emit('image', {
-                        username,
-                        room: currentRoom,
-                        image: imageBase64
-                    });
-                };
-                reader.readAsDataURL(file); // Lê a imagem como base64
-            }
-        });
-
-        
-
-        // Fechar o modal ao clicar no "X"
-        var span = document.getElementsByClassName("close")[0];
-        span.onclick = function() {
-            modal.style.display = 'none'; // Esconde o modal
-        };
 
         // Função para gerar uma cor aleatória para o nome do usuário
         function getUserColor(username) {
